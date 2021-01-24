@@ -35,7 +35,10 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
 #include <neodb/database.hpp>
+#include <neodb/page.hpp>
+#include <neodb/root_page.hpp>
 
 namespace neodb
 {
@@ -43,12 +46,37 @@ namespace neodb
     {
     public:
         file_database(std::filesystem::path const& aDatabasePath) :
-            database{ aDatabasePath.filename().stem().generic_string() }
+            database{ aDatabasePath.filename().stem().generic_string() },
+            iRoot{}
         {
+            iRoot.clear();
+            if (!std::filesystem::exists(aDatabasePath.parent_path()))
+                std::filesystem::create_directories(aDatabasePath.parent_path());
+            bool newDatabase = !std::filesystem::exists(aDatabasePath);
+            iFile.emplace(aDatabasePath.generic_string(), std::ios::binary | std::ios::in | std::ios::out | std::ios::app);
+            if (!file())
+                throw std::runtime_error{ "Failed to open database file '" + aDatabasePath.generic_string() + "'" };
+            file().seekg(0);
+            file().seekp(0);
+            if (newDatabase)
+                file() << iRoot;
+            else
+                file() >> iRoot;
+            if (!file())
+                throw std::runtime_error{ "Failed to initialise database '" + aDatabasePath.generic_string() + "'" };
         }
     public:
         void create_table(i_table_schema const& aSchema) override
         {
         }
+    private:
+        std::fstream& file()
+        {
+            return *iFile;
+        }
+        void commit();
+    private:
+        std::optional<std::fstream> iFile;
+        root_file_page iRoot;
     };
 }

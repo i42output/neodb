@@ -32,46 +32,22 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- // todo: use gtest
-#include <neodb/file_database.hpp>
-#include <neodb/memory_database.hpp>
+#pragma once
 
-using namespace neodb;
+#include <neodb/page.hpp>
 
-void test_file_database()
+namespace neodb
 {
-    file_database database{ "/tmp/accounts.db" };
+    template <typename Pointer = little_uint64_t>
+    struct basic_root_page_data
+    {
+        typedef basic_file_page_link<Pointer> link_type;
 
-    create_table<primary_key<string>>(
-        database,
-        "Companies"_s,
-        "Company Name"_s);
+        link_type freePages;
+        link_type tableSchemaPages;
+        link_type tablePages;
+        link_type indexPages;
+    };
 
-    typedef int32_t currency;
-
-    create_table<primary_key<int32_t>, foreign_key<string>, currency>(
-        database, 
-        "Invoices"_s, 
-        "Invoice Number"_s, 
-        as_foreign_key<string>{ "Company Name"_s, "Companies"_s, "Company Name"_s }, 
-        "Total"_s );
-}
-
-void test_memory_database()
-{
-    memory_database database{ "Players"_s };
-
-    typedef int64_t score;
-
-    create_table<primary_key<string>, score>(
-        database,
-        "High Scores"_s,
-        "Player Name"_s,
-        "Score"_s);
-}
-
-int main()
-{
-    test_file_database();
-    test_memory_database();
+    using root_page_data = basic_root_page_data<>;
 }
