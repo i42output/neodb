@@ -32,16 +32,34 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tuple>
-#include <server.hpp>
+#pragma once
+
+#include <neodb/data_type.hpp>
+#include <neodb/i_table.hpp>
+#include <neodb/table_schema.hpp>
 
 namespace neodb
 {
-    server::server(std::filesystem::path const& aConfigFile) : 
-        iConfig{ aConfigFile.generic_string() },
-        iDbRoot{ iConfig.at("db_root").as<neolib::rjson_string>().to_std_string() },
-        iHostIp{ iConfig.at("host_ip").as<neolib::rjson_string>().to_std_string() },
-        iHostPort{ static_cast<unsigned short>(iConfig.at("host_port").as<int32_t>()) }
+    class i_database
     {
+    public:
+        typedef i_database abstract_type;
+    public:
+        virtual ~i_database() = default;
+    public:
+        virtual i_string const& name() const = 0;
+        virtual i_vector<i_ref_ptr<i_table>> const& tables() const = 0;
+        virtual void create_table(i_table_schema const& aSchema) = 0;
+    };
+
+    inline void create_table(i_database& aDatabase, i_table_schema const& aSchema)
+    {
+        aDatabase.create_table(aSchema);
+    }
+
+    template <typename... Fields, typename... FieldSpecs>
+    inline void create_table(i_database& aDatabase, string const& aTableName, FieldSpecs&&... aFieldSpecs)
+    {
+        aDatabase.create_table(typed_table_schema<Fields...>{ aTableName, std::forward<FieldSpecs>(aFieldSpecs)... });
     }
 }

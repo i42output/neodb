@@ -32,16 +32,22 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tuple>
-#include <server.hpp>
+#pragma once
+
+#include <neodb/data_type.hpp>
 
 namespace neodb
 {
-    server::server(std::filesystem::path const& aConfigFile) : 
-        iConfig{ aConfigFile.generic_string() },
-        iDbRoot{ iConfig.at("db_root").as<neolib::rjson_string>().to_std_string() },
-        iHostIp{ iConfig.at("host_ip").as<neolib::rjson_string>().to_std_string() },
-        iHostPort{ static_cast<unsigned short>(iConfig.at("host_port").as<int32_t>()) }
+    class i_database;
+
+    class i_table : public neolib::i_reference_counted
     {
-    }
+    public:
+        typedef i_table abstract_type;
+    public:
+        virtual ~i_table() = default;
+    public:
+        virtual i_database& database() const = 0;
+        virtual i_string const& name() const = 0;
+    };
 }

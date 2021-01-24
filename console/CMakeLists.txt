@@ -23,8 +23,10 @@ if (WIN32)
 	set(Boost_USE_STATIC_LIBS   ON)
 	set(Boost_USE_STATIC_RUNTIME ON)
 endif()
+
 target_link_libraries(console PRIVATE Boost::system)
 target_link_libraries(console PRIVATE OpenSSL::SSL)
 target_link_libraries(console PRIVATE ZLIB::ZLIB)
+target_link_libraries(console PRIVATE neolib$<$<CONFIG:Debug>:d>)
 
 

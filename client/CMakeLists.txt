@@ -17,6 +17,17 @@ set_property(TARGET client PROPERTY CXX_VISIBILITY_PRESET hidden)
 set_property(TARGET client PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
 set_property(TARGET client PROPERTY VERSION ${PROJECT_VERSION})
 
+# dependencies
+target_link_libraries(client PUBLIC Threads::Threads)
+if (WIN32)
+	set(Boost_USE_STATIC_LIBS   ON)
+	set(Boost_USE_STATIC_RUNTIME ON)
+endif()
+
+target_link_libraries(client PRIVATE Boost::system)
+target_link_libraries(client PRIVATE OpenSSL::SSL)
+target_link_libraries(client PRIVATE ZLIB::ZLIB)
+target_link_libraries(client PRIVATE neolib$<$<CONFIG:Debug>:d>)
 
 
 

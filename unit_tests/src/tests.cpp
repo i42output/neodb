@@ -32,16 +32,41 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tuple>
-#include <server.hpp>
+ // todo: use gtest
+#include <neodb/file_database.hpp>
+#include <neodb/memory_database.hpp>
 
-namespace neodb
+using namespace neodb;
+
+void test_file_database()
 {
-    server::server(std::filesystem::path const& aConfigFile) : 
-        iConfig{ aConfigFile.generic_string() },
-        iDbRoot{ iConfig.at("db_root").as<neolib::rjson_string>().to_std_string() },
-        iHostIp{ iConfig.at("host_ip").as<neolib::rjson_string>().to_std_string() },
-        iHostPort{ static_cast<unsigned short>(iConfig.at("host_port").as<int32_t>()) }
-    {
-    }
+    file_database database{ "/tmp/accounts.db" };
+
+    create_table<primary_key<string>>(
+        database,
+        "Companies"_s,
+        "Company Name"_s);
+
+    typedef int32_t currency;
+
+    create_table<primary_key<int32_t>, foreign_key<string>, currency>(
+        database, 
+        "Invoices"_s, 
+        "Invoice Number"_s, 
+        as_foreign_key<string>{ "Company Name"_s, "Companies"_s, "Company Name"_s }, 
+        "Total"_s );
 }
+
+void test_memory_database()
+{
+    memory_database database{ "Players"_s };
+
+    typedef int64_t score;
+
+    create_table<primary_key<string>, score>(
+        database,
+        "High Scores"_s,
+        "Player Name"_s,
+        "Score"_s);
+}
+

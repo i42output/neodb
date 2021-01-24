@@ -22,7 +22,7 @@ if(MSVC)
     add_definitions(-D_UNICODE)
 endif()
 
-add_definitions(-DNEOLIB_HOSTED_ENVIRONMENT)
+add_definitions(-DNEOLIB_HOSTED_ENVIRONMENT)                                                        
 
 # dependencies
 find_package(Threads REQUIRED)
@@ -41,6 +41,7 @@ link_directories(${COMMON_LIBRARY_PATH})
 add_subdirectory(client)
 add_subdirectory(server)
 add_subdirectory(console)
+add_subdirectory(unit_tests)
 
 install(DIRECTORY include/neodb DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 install(TARGETS client DESTINATION "${CMAKE_INSTALL_LIBDIR}" EXPORT client)
