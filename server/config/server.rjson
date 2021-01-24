@@ -1,0 +1,7 @@
+// neodb - server config
+
+{
+	db_root: /var/lib/neodb
+	host_ip: 127.0.0.1
+	host_port: 4222
+}
