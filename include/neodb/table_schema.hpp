@@ -42,35 +42,6 @@
 
 namespace neodb
 {
-    struct field_spec
-    {
-        string name;
-        data_type data;
-
-        field_spec(string const& name, data_type data) :
-            name{ name }, data{ data }
-        {
-        }
-    };
-
-    struct primary_key_spec : field_spec
-    {
-        using field_spec::field_spec;
-    };
-
-    struct foreign_key_spec : field_spec
-    {
-        data_type data;
-        foreign_key_reference reference;
-        typedef foreign_key_reference extra_type;
-
-        foreign_key_spec(string const& name, data_type data, foreign_key_reference const& reference) :
-            field_spec{ name, data }, reference{ reference }
-        {}
-    };
-
-    using field_spec_variant = variant<field_spec, primary_key_spec, foreign_key_spec>;
-
     template <typename T, typename SpecT>
     struct typed_field_spec : SpecT
     {
@@ -107,14 +78,22 @@ namespace neodb
             iName{ aTableName }, iFields{ std::forward<FieldSpecs>(aFieldSpecs)... }
         {
         }
+        table_schema(i_table_schema const& aOther) :
+            iName{ aOther.name() }, iFields{ aOther.fields() }
+        {
+        }
     public:
-        i_string const& name() const override
+        string const& name() const override
         {
             return iName;
         }
+        neolib::vector<field_spec_variant> const& fields() const override
+        {
+            return iFields;
+        }
     private:
         string iName;
-        std::vector<field_spec_variant> iFields;
+        neolib::vector<field_spec_variant> iFields;
     };
 
     template <typename... Fields>

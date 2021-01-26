@@ -54,6 +54,7 @@ namespace neodb
     using neolib::ref_ptr;
     using neolib::i_vector;
     using neolib::vector;
+    using neolib::i_variant;
     using neolib::variant;
     using neolib::i_optional;
     using neolib::optional;
@@ -121,14 +122,35 @@ namespace neodb
     template <typename T>
     struct primary_key {};
 
-    struct foreign_key_reference
+    class i_foreign_key_reference
     {
-        string table;
-        string field;
+    public:
+        typedef i_foreign_key_reference abstract_type;
+    public:
+        virtual ~i_foreign_key_reference() = default;
+    public:
+        virtual i_string const& table() const = 0;
+        virtual i_string const& field() const = 0;
+    };
 
-        foreign_key_reference(string const& table, string const& field) :
-            table{ table }, field{ field }
+    class foreign_key_reference : public i_foreign_key_reference
+    {
+    public:
+        foreign_key_reference(string const& aTable, string const& aField) :
+            iTable{ aTable }, iField{ aField }
         {}
+    public:
+        i_string const& table() const
+        {
+            return iTable;
+        }
+        i_string const& field() const
+        {
+            return iField;
+        }
+    private:
+        string iTable;
+        string iField;
     };
 
     template <typename T>

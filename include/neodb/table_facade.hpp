@@ -34,24 +34,19 @@
 
 #pragma once
 
-#include <vector>
-#include <tuple>
-#include <string>
-#include <neodb/data_type.hpp>
-#include <neodb/i_database.hpp>
+#include <neodb/i_table.hpp>
 
 namespace neodb
 {
-    class table
+    template <typename... Fields>
+    class table_facade
     {
     public:
-        table(i_database& aDatabase, std::string const& aTableName) :
-            iDatabase{ aDatabase },
-            iTableName{ aTableName }
+        table_facade(i_table& aTable) :
+            iTable{ aTable }
         {
         }
     private:
-        i_database& iDatabase;
-        std::string iTableName;
+        i_table& iTable;
     };
 }

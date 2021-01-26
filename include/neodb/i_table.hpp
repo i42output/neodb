@@ -35,6 +35,8 @@
 #pragma once
 
 #include <neodb/data_type.hpp>
+#include <neodb/i_database.hpp>
+#include <neodb/i_table_schema.hpp>
 
 namespace neodb
 {
@@ -49,5 +51,6 @@ namespace neodb
     public:
         virtual i_database& database() const = 0;
         virtual i_string const& name() const = 0;
+        virtual i_table_schema const& schema() const = 0;
     };
 }

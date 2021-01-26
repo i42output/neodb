@@ -34,25 +34,25 @@
 
 #pragma once
 
-#include <vector>
-#include <tuple>
-#include <string>
-#include <neodb/data_type.hpp>
-#include <neodb/i_database.hpp>
+#include <neolib/core/reference_counted.hpp>
+#include <neodb/i_table.hpp>
+#include <neodb/table_schema.hpp>
 
 namespace neodb
 {
     class table : public neolib::reference_counted<i_table>
     {
     public:
-        table(i_database& aDatabase, std::string const& aTableName) :
+        table(i_database& aDatabase, std::string const& aTableName, i_table_schema const& aSchema) :
             iDatabase{ aDatabase },
-            iName{ aTableName }
+            iName{ aTableName },
+            iSchema{ aSchema }
         {
         }
         table(i_table const& aOther) : 
             iDatabase{ aOther.database() },
-            iName{ aOther.name() }
+            iName{ aOther.name() },
+            iSchema{ aOther.schema() }
         {
         }
     public:
@@ -64,8 +64,13 @@ namespace neodb
         {
             return iName;
         }
+        i_table_schema const& schema() const override
+        {
+            return iSchema;
+        }
     private:
         i_database& iDatabase;
         string iName;
+        table_schema iSchema;
     };
 }

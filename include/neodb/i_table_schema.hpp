@@ -34,13 +34,81 @@
 
 #pragma once
 
-#include <vector>
-#include <tuple>
-#include <string>
+#include <neolib/core/i_vector.hpp>
 #include <neodb/data_type.hpp>
 
 namespace neodb
 {
+    class i_field_spec
+    {
+    public:
+        typedef i_field_spec abstract_type;
+    public:
+        virtual ~i_field_spec() = default;
+    public:
+        virtual i_string const& name() const = 0;
+        virtual data_type type() const = 0;
+    };
+
+    template <typename Interface = i_field_spec>
+    class basic_field_spec : public Interface
+    {
+    public:
+        basic_field_spec(string const& aName, data_type aType) :
+            iName{ aName }, iType{ aType }
+        {
+        }
+    public:
+        string const& name() const override
+        {
+            return iName;
+        }
+        data_type type() const override
+        {
+            return iType;
+        }
+    private:
+        string iName;
+        data_type iType;
+    };
+
+    typedef basic_field_spec<> field_spec;
+
+    class primary_key_spec : public field_spec
+    {
+    public:
+        using field_spec::field_spec;
+    };
+
+    class i_foreign_key_spec : public i_field_spec
+    {
+    public:
+        typedef i_foreign_key_spec abstract_type;
+    public:
+        virtual i_foreign_key_reference const& reference() const = 0;
+    };
+
+    class foreign_key_spec : public basic_field_spec<i_foreign_key_spec>
+    {
+        typedef basic_field_spec<i_foreign_key_spec> base_type;
+    public:
+        typedef foreign_key_reference extra_type;
+    public:
+        foreign_key_spec(string const& aName, data_type aType, foreign_key_reference const& aReference) :
+            base_type{ aName, aType }, iReference{ aReference }
+        {}
+    public:
+        foreign_key_reference const& reference() const override
+        {
+            return iReference;
+        }
+    private:
+        foreign_key_reference iReference;
+    };
+
+    using field_spec_variant = variant<field_spec, primary_key_spec, foreign_key_spec>;
+    using i_field_spec_variant = neolib::abstract_t<field_spec_variant>;
+
     class i_table_schema
     {
     public:
@@ -49,5 +117,6 @@ namespace neodb
         virtual ~i_table_schema() = default;
     public:
         virtual i_string const& name() const = 0;
+        virtual i_vector<i_field_spec_variant> const& fields() const = 0;
     };
 }
