@@ -38,7 +38,6 @@
 #include <fstream>
 #include <neodb/database.hpp>
 #include <neodb/page.hpp>
-#include <neodb/root_page.hpp>
 
 namespace neodb
 {
@@ -77,6 +76,6 @@ namespace neodb
         void commit();
     private:
         std::optional<std::fstream> iFile;
-        root_file_page iRoot;
+        root_page iRoot;
     };
 }

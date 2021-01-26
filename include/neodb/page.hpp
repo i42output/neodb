@@ -45,44 +45,52 @@ using namespace boost::endian;
 
 namespace neodb
 {
-    enum class page_type : uint64_t
-    {
-        // todo
-        Free            = 0x0000000000000000,
-        Root_v_0_0_1    = 0x31303062646f656e, // neodb v0.0.1
-        Root            = Root_v_0_0_1,
-        TableSchema     = 0x0000000000000002,
-        Table           = 0x0000000000000003,
-        Index           = 0x0000000000000004
-    };
-
     template <typename Pointer = little_uint64_t>
-    struct basic_file_page_link
+    struct basic_page_link
     {
         typedef Pointer pointer_type;
+        typedef pointer_type size_type;
 
         pointer_type previous;
         pointer_type next;
+        size_type used;
     };
 
     template <typename Pointer = little_uint64_t>
-    struct basic_file_page_header
+    struct basic_page_header
     {
         typedef Pointer pointer_type;
-        typedef basic_file_page_link<Pointer> link_type;
+        typedef basic_page_link<pointer_type> link_type;
 
-        little_uint64_t type;
-        link_type link;
+        link_type pageLink;
+        link_type recordLink;
     };
 
-    template <page_type Type, typename Pointer = little_uint64_t, std::size_t Size = 8192>
-    struct basic_file_page
+    typedef little_uint64_t magic_t;
+    magic_t const MAGIC = 0x31307642444F454E; // NEODBv01
+
+    struct bad_magic : std::runtime_error { bad_magic() : std::runtime_error{ "neodb::bad_magic" } {} };
+
+    template <typename Pointer = little_uint64_t>
+    struct basic_root_page_header
     {
-        static constexpr page_type type = Type;
+        typedef Pointer pointer_type;
+        typedef basic_page_link<pointer_type> link_type;
+
+        magic_t magic = MAGIC;
+        link_type freePages;
+        link_type tableSchemaPages;
+        link_type tablePages;
+        link_type indexPages;
+    };
+
+    template <typename Header = basic_page_header<>, std::size_t Size = 8192>
+    struct basic_page
+    {
         static constexpr std::size_t size = Size;
 
-        typedef Pointer pointer_type;
-        typedef basic_file_page_header<pointer_type> header_type;
+        typedef Header header_type;
+        typedef typename header_type::pointer_type pointer_type;
         typedef std::array<std::uint8_t, Size - sizeof(header_type)> data_type;
 
         header_type header;
@@ -90,7 +98,7 @@ namespace neodb
 
         void clear()
         {
-            header = header_type{ native_to_little(static_cast<uint64_t>(type)) };
+            header = header_type{};
             data = data_type{};
         }
         template <typename T>
@@ -120,11 +128,11 @@ namespace neodb
         }
     };
 
-    using free_file_page = basic_file_page<page_type::Free>;
-    using root_file_page = basic_file_page<page_type::Root>;
-    using table_schema_file_page = basic_file_page<page_type::TableSchema>;
-    using table_file_page = basic_file_page<page_type::Table>;
-    using index_file_page = basic_file_page<page_type::Index>;
+    using root_page = basic_page<basic_root_page_header<>>;
+    using free_page = basic_page<>;
+    using table_schema_page = basic_page<>;
+    using table_page = basic_page<>;
+    using index_page = basic_page<>;
 
     template <typename Char, typename CharT, typename T>
     inline void endian_write(std::basic_ostream<Char, CharT>& aStream, T const& aEndianBuffer)
@@ -139,35 +147,74 @@ namespace neodb
     }
 
     template <typename Char, typename CharT, typename Pointer>
-    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_file_page_link<Pointer> const& aLink)
+    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_page_link<Pointer> const& aLink)
     {
         endian_write(aStream, aLink.previous);
         endian_write(aStream, aLink.next);
+        endian_write(aStream, aLink.used);
         return aStream;
     }
 
-    template <typename Char, typename CharT, page_type Type, typename Pointer, std::size_t Size>
-    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_file_page<Type, Pointer, Size> const& aPage)
+    template <typename Char, typename CharT, typename Pointer>
+    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_page_header<Pointer> const& aHeader)
     {
-        endian_write(aStream, aPage.header.type);
-        aStream << aPage.header.link;
+        aStream << aHeader.pageLink;
+        aStream << aHeader.recordLink;
+        return aStream;
+    }
+
+    template <typename Char, typename CharT, typename Pointer>
+    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_root_page_header<Pointer> const& aRootHeader)
+    {
+        endian_write(aStream, aRootHeader.magic);
+        aStream << aRootHeader.freePages;
+        aStream << aRootHeader.tableSchemaPages;
+        aStream << aRootHeader.tablePages;
+        aStream << aRootHeader.indexPages;
+        return aStream;
+    }
+
+    template <typename Char, typename CharT, typename Header, std::size_t Size>
+    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_page<Header, Size> const& aPage)
+    {
+        aStream << aPage.header;
         aStream.write(aPage.data_as<char>(), aPage.data.size());
         return aStream;
     }
 
     template <typename Char, typename CharT, typename Pointer>
-    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_file_page_link<Pointer>& aLink)
+    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_page_link<Pointer>& aLink)
     {
         endian_read(aStream, aLink.previous);
         endian_read(aStream, aLink.next);
         return aStream;
     }
 
-    template <typename Char, typename CharT, page_type Type, typename Pointer, std::size_t Size>
-    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_file_page<Type, Pointer, Size>& aPage)
+    template <typename Char, typename CharT, typename Pointer>
+    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_page_header<Pointer>& aHeader)
     {
-        endian_read(aStream, aPage.header.type);
-        aStream >> aPage.header.link;
+        aStream >> aHeader.pageLink;
+        aStream >> aHeader.recordLink;
+        return aStream;
+    }
+
+    template <typename Char, typename CharT, typename Pointer>
+    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_root_page_header<Pointer>& aRootHeader)
+    {
+        endian_read(aStream, aRootHeader.magic);
+        if (aRootHeader.magic != MAGIC)
+            throw bad_magic();
+        aStream >> aRootHeader.freePages;
+        aStream >> aRootHeader.tableSchemaPages;
+        aStream >> aRootHeader.tablePages;
+        aStream >> aRootHeader.indexPages;
+        return aStream;
+    }
+
+    template <typename Char, typename CharT, typename Header, std::size_t Size>
+    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_page<Header, Size>& aPage)
+    {
+        aStream >> aPage.header;
         aStream.read(aPage.data_as<char>(), aPage.data.size());
         return aStream;
     }

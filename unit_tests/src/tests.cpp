@@ -40,26 +40,32 @@ using namespace neodb;
 
 void test_file_database()
 {
-    file_database database{ "/tmp/accounts.db" };
+    std::filesystem::remove("/tmp/accounts.db");
+    {
+        file_database database{ "/tmp/accounts.db" };
 
-    create_table<primary_key<string>>(
-        database,
-        "Companies"_s,
-        "Company Name"_s);
+        create_table<primary_key<string>>(
+            database,
+            "Companies"_s,
+            "Company Name"_s);
 
-    typedef int32_t currency;
+        typedef int32_t currency;
 
-    create_table<primary_key<int32_t>, foreign_key<string>, currency>(
-        database, 
-        "Invoices"_s, 
-        "Invoice Number"_s, 
-        as_foreign_key<string>{ "Company Name"_s, "Companies"_s, "Company Name"_s }, 
-        "Total"_s );
+        create_table<primary_key<int32_t>, foreign_key<string>, currency>(
+            database,
+            "Invoices"_s,
+            "Invoice Number"_s,
+            as_foreign_key<string>{ "Company Name"_s, "Companies"_s, "Company Name"_s },
+            "Total"_s);
+    }
+    {
+        file_database database{ "/tmp/accounts.db" };
+    }
 }
 
 void test_memory_database()
 {
-    memory_database database{ "Players"_s };
+    memory_database database{ "Players" };
 
     typedef int64_t score;
 
@@ -72,6 +78,17 @@ void test_memory_database()
 
 int main()
 {
-    test_file_database();
-    test_memory_database();
+    try
+    {
+        test_file_database();
+        test_memory_database();
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "Error: unknown error" << std::endl;
+    }
 }

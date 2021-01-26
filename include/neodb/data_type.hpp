@@ -126,7 +126,7 @@ namespace neodb
         string table;
         string field;
 
-        foreign_key_reference(string table, string field) :
+        foreign_key_reference(string const& table, string const& field) :
             table{ table }, field{ field }
         {}
     };
