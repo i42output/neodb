@@ -52,6 +52,7 @@ namespace neodb
 {
     using neolib::i_ref_ptr;
     using neolib::ref_ptr;
+    using neolib::weak_ref_ptr;
     using neolib::make_ref;
     using neolib::i_vector;
     using neolib::vector;

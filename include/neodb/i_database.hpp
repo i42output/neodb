@@ -42,13 +42,6 @@
 
 namespace neodb
 {
-    enum class record_type
-    {
-        TableSchema,
-        Table,
-        Index
-    };
-
     class i_database
     {
     public:

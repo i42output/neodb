@@ -34,66 +34,34 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <neodb/data_type.hpp>
 #include <neodb/i_database.hpp>
-#include <neodb/record.hpp>
-#include <neodb/table.hpp>
+#include <neodb/i_record.hpp>
 
 namespace neodb
 {
-    class database : public i_database
+    class record : public neolib::reference_counted<i_record>
     {
     public:
-        typedef vector<ref_ptr<table>> table_list;
-    public:
-        database(string const& aDatabaseName) :
-            iName{ aDatabaseName },
-            iRoot{}
+        record(i_database& aDatabase, record_type aRecordType, link::size_type aRecordSize) :
+            iDatabase{ aDatabase }, iType{ aRecordType }, iSize{ aRecordSize }
         {
         }
     public:
-        i_string const& name() const override
+        i_database& database() const
         {
-            return iName;
+            return iDatabase;
         }
-        table_list const& tables() const override
+        record_type type() const
         {
-            return iTables;
+            return iType;
         }
-        void create_table(i_table_schema const& aSchema) override
+        link::size_type size() const
         {
-            iTables.push_back(make_ref<table>(*this, aSchema));
+            return iSize;
         }
-    public:
-        root_page const& root() const override
-        {
-            return iRoot;
-        }
-        root_page& root() override
-        {
-            return iRoot;
-        }
-        void allocate_record(record_type aRecordType, link::size_type aRecordSize, i_ref_ptr<i_record>& aNewRecord) override
-        {
-            // todo: use a pool of records to reduce number of memory allocations.
-            aNewRecord = make_ref<record>(*this, aRecordType, aRecordSize);
-            iActiveRecords[&*aNewRecord] = aNewRecord;
-        }
-        void free_record(i_record& aExistingRecord) override
-        {
-            // todo: use a pool of records to reduce number of memory allocations.
-            auto existing = iActiveRecords.find(&aExistingRecord);
-            if (existing != iActiveRecords.end())
-                iActiveRecords.erase(existing);
-        }
-    protected:
-        virtual page::pointer_type allocate_page() = 0;
-        virtual void free_page(page::pointer_type aAddress) = 0;
     private:
-        string iName;
-        root_page iRoot;
-        table_list iTables;
-        std::unordered_map<i_record*, weak_ref_ptr<i_record>> iActiveRecords;
+        i_database& iDatabase;
+        record_type iType;
+        link::size_type iSize;
     };
 }

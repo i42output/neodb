@@ -38,11 +38,22 @@
 
 namespace neodb
 {
+    class i_database;
+
+    enum class record_type
+    {
+        TableSchema,
+        Table,
+        Index
+    };
+
     class i_record : public neolib::i_reference_counted
     {
     public:
         typedef i_record abstract_type;
     public:
-        virtual ~i_record() = default;
+        virtual i_database& database() const = 0;
+        virtual record_type type() const = 0;
+        virtual link::size_type size() const = 0;
     };
 }
