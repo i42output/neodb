@@ -42,7 +42,7 @@ namespace neodb
 
     enum class record_type
     {
-        TableSchema,
+        Schema,
         Table,
         Index
     };

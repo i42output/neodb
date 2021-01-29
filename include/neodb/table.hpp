@@ -36,14 +36,14 @@
 
 #include <neolib/core/reference_counted.hpp>
 #include <neodb/i_table.hpp>
-#include <neodb/table_schema.hpp>
+#include <neodb/schema.hpp>
 
 namespace neodb
 {
     class table : public neolib::reference_counted<i_table>
     {
     public:
-        table(i_database& aDatabase, i_table_schema const& aSchema) :
+        table(i_database& aDatabase, i_schema const& aSchema) :
             iDatabase{ aDatabase },
             iSchema{ aSchema }
         {
@@ -62,12 +62,12 @@ namespace neodb
         {
             return iSchema.name();
         }
-        i_table_schema const& schema() const override
+        i_schema const& schema() const override
         {
             return iSchema;
         }
     private:
         i_database& iDatabase;
-        table_schema iSchema;
+        neodb::schema iSchema;
     };
 }

@@ -36,7 +36,7 @@
 
 #include <neodb/data_type.hpp>
 #include <neodb/i_table.hpp>
-#include <neodb/table_schema.hpp>
+#include <neodb/schema.hpp>
 #include <neodb/page.hpp>
 #include <neodb/i_record.hpp>
 
@@ -51,7 +51,7 @@ namespace neodb
     public:
         virtual i_string const& name() const = 0;
         virtual i_vector<i_ref_ptr<i_table>> const& tables() const = 0;
-        virtual void create_table(i_table_schema const& aSchema) = 0;
+        virtual void create_table(i_schema const& aSchema) = 0;
     public:
         virtual root_page const& root() const = 0;
         virtual root_page& root() = 0;
@@ -67,7 +67,7 @@ namespace neodb
         }
     };
 
-    inline void create_table(i_database& aDatabase, i_table_schema const& aSchema)
+    inline void create_table(i_database& aDatabase, i_schema const& aSchema)
     {
         aDatabase.create_table(aSchema);
     }
@@ -75,6 +75,6 @@ namespace neodb
     template <typename... Fields, typename... FieldSpecs>
     inline void create_table(i_database& aDatabase, string const& aTableName, FieldSpecs&&... aFieldSpecs)
     {
-        aDatabase.create_table(typed_table_schema<Fields...>{ aTableName, std::forward<FieldSpecs>(aFieldSpecs)... });
+        aDatabase.create_table(typed_schema<Fields...>{ aTableName, std::forward<FieldSpecs>(aFieldSpecs)... });
     }
 }

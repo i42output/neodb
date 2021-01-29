@@ -61,7 +61,7 @@ namespace neodb
         {
             return iTables;
         }
-        void create_table(i_table_schema const& aSchema) override
+        void create_table(i_schema const& aSchema) override
         {
             iTables.push_back(make_ref<table>(*this, aSchema));
         }

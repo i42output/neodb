@@ -34,29 +34,52 @@
 
 #pragma once
 
-#include <neolib/core/i_vector.hpp>
+#include <vector>
+#include <tuple>
+#include <string>
 #include <neodb/data_type.hpp>
-#include <neodb/page.hpp>
+#include <neodb/i_schema.hpp>
 
 namespace neodb
 {
-    class i_field_spec
+    template <typename T, typename SpecT>
+    struct typed_field_spec : SpecT
     {
-    public:
-        typedef i_field_spec abstract_type;
-    public:
-        virtual ~i_field_spec() = default;
-    public:
-        virtual i_string const& name() const = 0;
-        virtual data_type type() const = 0;
+        typedef SpecT base_spec_type;
+
+        typed_field_spec(string const& name) :
+            base_spec_type{ name, as_dave_type_v<T> }
+        {
+        }
+        template <typename... Args>
+        typed_field_spec(string const& name, Args&&... aArgs) :
+            base_spec_type{ name, as_dave_type_v<T>, typename base_spec_type::extra_type{ std::forward<Args>(aArgs)... } }
+        {
+        }
     };
 
-    template <typename Interface = i_field_spec>
-    class basic_field_spec : public Interface
+    template <typename T>
+    struct to_field_spec { typedef typed_field_spec<T, field_spec> type; };
+    template <typename T>
+    struct to_field_spec<primary_key<T>> { typedef typed_field_spec<T, primary_key_spec> type; };
+    template <typename T>
+    struct to_field_spec<foreign_key<T>> { typedef typed_field_spec<T, foreign_key_spec> type; };
+    template <typename T>
+    using to_field_spec_t = typename to_field_spec<T>::type;
+
+    template <typename T>
+    using as_foreign_key = to_field_spec_t<foreign_key<T>>;
+
+    class schema : public i_schema
     {
     public:
-        basic_field_spec(string const& aName, data_type aType) :
-            iName{ aName }, iType{ aType }
+        template <typename... FieldSpecs>
+        schema(string const& aTableName, FieldSpecs&&... aFieldSpecs) :
+            iName{ aTableName }, iFields{ std::forward<FieldSpecs>(aFieldSpecs)... }
+        {
+        }
+        schema(i_schema const& aOther) :
+            iName{ aOther.name() }, iFields{ aOther.fields().begin(), aOther.fields().end() }
         {
         }
     public:
@@ -64,60 +87,22 @@ namespace neodb
         {
             return iName;
         }
-        data_type type() const override
+        neolib::vector<field_spec_variant> const& fields() const override
         {
-            return iType;
+            return iFields;
         }
     private:
         string iName;
-        data_type iType;
+        neolib::vector<field_spec_variant> iFields;
     };
 
-    typedef basic_field_spec<> field_spec;
-
-    class primary_key_spec : public field_spec
+    template <typename... Fields>
+    class typed_schema : public schema
     {
     public:
-        using field_spec::field_spec;
-    };
-
-    class i_foreign_key_spec : public i_field_spec
-    {
-    public:
-        typedef i_foreign_key_spec abstract_type;
-    public:
-        virtual i_foreign_key_reference const& reference() const = 0;
-    };
-
-    class foreign_key_spec : public basic_field_spec<i_foreign_key_spec>
-    {
-        typedef basic_field_spec<i_foreign_key_spec> base_type;
-    public:
-        typedef foreign_key_reference extra_type;
-    public:
-        foreign_key_spec(string const& aName, data_type aType, foreign_key_reference const& aReference) :
-            base_type{ aName, aType }, iReference{ aReference }
-        {}
-    public:
-        foreign_key_reference const& reference() const override
+        typed_schema(string const& aTableName, to_field_spec_t<Fields>&&... aFieldSpecs) :
+            schema{ aTableName, std::forward<to_field_spec_t<Fields>>(aFieldSpecs)... }
         {
-            return iReference;
         }
-    private:
-        foreign_key_reference iReference;
-    };
-
-    using field_spec_variant = variant<field_spec, primary_key_spec, foreign_key_spec>;
-    using i_field_spec_variant = neolib::abstract_t<field_spec_variant>;
-
-    class i_table_schema
-    {
-    public:
-        typedef i_table_schema abstract_type;
-    public:
-        virtual ~i_table_schema() = default;
-    public:
-        virtual i_string const& name() const = 0;
-        virtual i_vector<i_field_spec_variant> const& fields() const = 0;
     };
 }
