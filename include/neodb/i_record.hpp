@@ -35,53 +35,14 @@
 #pragma once
 
 #include <neodb/data_type.hpp>
-#include <neodb/i_table.hpp>
-#include <neodb/table_schema.hpp>
-#include <neodb/page.hpp>
-#include <neodb/i_record.hpp>
 
 namespace neodb
 {
-    enum class record_type
+    class i_record : public neolib::i_reference_counted
     {
-        TableSchema,
-        Table,
-        Index
+    public:
+        typedef i_record abstract_type;
+    public:
+        virtual ~i_record() = default;
     };
-
-    class i_database
-    {
-    public:
-        typedef i_database abstract_type;
-    public:
-        virtual ~i_database() = default;
-    public:
-        virtual i_string const& name() const = 0;
-        virtual i_vector<i_ref_ptr<i_table>> const& tables() const = 0;
-        virtual void create_table(i_table_schema const& aSchema) = 0;
-    public:
-        virtual root_page const& root() const = 0;
-        virtual root_page& root() = 0;
-        virtual void allocate_record(record_type aRecordType, link::size_type aRecordSize, i_ref_ptr<i_record>& aNewRecord) = 0;
-        virtual void free_record(i_record& aExistingRecord) = 0;
-        // helpers
-    public:
-        ref_ptr<i_record> allocate_record(record_type aRecordType, link::size_type aRecordSize)
-        {
-            ref_ptr<i_record> newRecord;
-            allocate_record(aRecordType, aRecordSize, newRecord);
-            return newRecord;
-        }
-    };
-
-    inline void create_table(i_database& aDatabase, i_table_schema const& aSchema)
-    {
-        aDatabase.create_table(aSchema);
-    }
-
-    template <typename... Fields, typename... FieldSpecs>
-    inline void create_table(i_database& aDatabase, string const& aTableName, FieldSpecs&&... aFieldSpecs)
-    {
-        aDatabase.create_table(typed_table_schema<Fields...>{ aTableName, std::forward<FieldSpecs>(aFieldSpecs)... });
-    }
 }

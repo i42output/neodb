@@ -72,22 +72,10 @@ namespace neodb
         {
             return iRoot;
         }
-        void allocate_table_schema_page(page& aNewPage) override
+        void allocate_record(record_type aRecordType, link::size_type aRecordSize, i_ref_ptr<i_record>& aNewRecord) override
         {
         }
-        void allocate_table_page(page& aNewPage) override
-        {
-        }
-        void allocate_index_page(page& aNewPage) override
-        {
-        }
-        void free_table_schema_page(page& aPage) override
-        {
-        }
-        void free_table_page(page& aPage) override
-        {
-        }
-        void free_index_page(page& aPage) override
+        void free_record(i_record& aExistingRecord) override
         {
         }
     protected:

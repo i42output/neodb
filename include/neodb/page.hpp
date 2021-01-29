@@ -46,7 +46,7 @@ using namespace boost::endian;
 namespace neodb
 {
     template <typename Pointer = little_uint64_t>
-    struct basic_page_link
+    struct basic_link
     {
         typedef Pointer pointer_type;
         typedef pointer_type size_type;
@@ -60,7 +60,7 @@ namespace neodb
     struct basic_page_header
     {
         typedef Pointer pointer_type;
-        typedef basic_page_link<pointer_type> link_type;
+        typedef basic_link<pointer_type> link_type;
 
         link_type pageLink;
         link_type recordLink;
@@ -75,7 +75,7 @@ namespace neodb
     struct basic_root_page_header
     {
         typedef Pointer pointer_type;
-        typedef basic_page_link<pointer_type> link_type;
+        typedef basic_link<pointer_type> link_type;
 
         magic_t magic = MAGIC;
         link_type freePages;
@@ -128,8 +128,10 @@ namespace neodb
         }
     };
 
-    using root_page = basic_page<basic_root_page_header<>>;
+    using link = basic_link<>;
+    using page_header = basic_page_header<>;
     using page = basic_page<>;
+    using root_page = basic_page<basic_root_page_header<>>;
 
     template <typename Char, typename CharT, typename T>
     inline void endian_write(std::basic_ostream<Char, CharT>& aStream, T const& aEndianBuffer)
@@ -144,7 +146,7 @@ namespace neodb
     }
 
     template <typename Char, typename CharT, typename Pointer>
-    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_page_link<Pointer> const& aLink)
+    inline std::basic_ostream<Char, CharT>& operator<<(std::basic_ostream<Char, CharT>& aStream, basic_link<Pointer> const& aLink)
     {
         endian_write(aStream, aLink.previous);
         endian_write(aStream, aLink.next);
@@ -180,7 +182,7 @@ namespace neodb
     }
 
     template <typename Char, typename CharT, typename Pointer>
-    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_page_link<Pointer>& aLink)
+    inline std::basic_istream<Char, CharT>& operator>>(std::basic_istream<Char, CharT>& aStream, basic_link<Pointer>& aLink)
     {
         endian_read(aStream, aLink.previous);
         endian_read(aStream, aLink.next);
