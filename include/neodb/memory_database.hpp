@@ -45,5 +45,13 @@ namespace neodb
             database{ aDatabaseName }
         {
         }
+    protected:
+        page::pointer_type allocate_page() override
+        {
+            return 0;
+        }
+        void free_page(page::pointer_type aAddress) override
+        {
+        }
     };
 }

@@ -37,6 +37,7 @@
 #include <neodb/data_type.hpp>
 #include <neodb/i_table.hpp>
 #include <neodb/table_schema.hpp>
+#include <neodb/page.hpp>
 
 namespace neodb
 {
@@ -50,6 +51,15 @@ namespace neodb
         virtual i_string const& name() const = 0;
         virtual i_vector<i_ref_ptr<i_table>> const& tables() const = 0;
         virtual void create_table(i_table_schema const& aSchema) = 0;
+    public:
+        virtual root_page const& root() const = 0;
+        virtual root_page& root() = 0;
+        virtual void allocate_table_schema_page(page& aNewPage) = 0;
+        virtual void allocate_table_page(page& aNewPage) = 0;
+        virtual void allocate_index_page(page& aNewPage) = 0;
+        virtual void free_table_schema_page(page& aPage) = 0;
+        virtual void free_table_page(page& aPage) = 0;
+        virtual void free_index_page(page& aPage) = 0;
     };
 
     inline void create_table(i_database& aDatabase, i_table_schema const& aSchema)

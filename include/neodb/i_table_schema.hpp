@@ -36,6 +36,7 @@
 
 #include <neolib/core/i_vector.hpp>
 #include <neodb/data_type.hpp>
+#include <neodb/page.hpp>
 
 namespace neodb
 {

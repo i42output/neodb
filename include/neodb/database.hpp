@@ -46,7 +46,8 @@ namespace neodb
         typedef vector<ref_ptr<table>> table_list;
     public:
         database(string const& aDatabaseName) :
-            iName{ aDatabaseName }
+            iName{ aDatabaseName },
+            iRoot{}
         {
         }
     public:
@@ -62,8 +63,39 @@ namespace neodb
         {
             iTables.push_back(make_ref<table>(*this, aSchema));
         }
+    public:
+        root_page const& root() const override
+        {
+            return iRoot;
+        }
+        root_page& root() override
+        {
+            return iRoot;
+        }
+        void allocate_table_schema_page(page& aNewPage) override
+        {
+        }
+        void allocate_table_page(page& aNewPage) override
+        {
+        }
+        void allocate_index_page(page& aNewPage) override
+        {
+        }
+        void free_table_schema_page(page& aPage) override
+        {
+        }
+        void free_table_page(page& aPage) override
+        {
+        }
+        void free_index_page(page& aPage) override
+        {
+        }
+    protected:
+        virtual page::pointer_type allocate_page() = 0;
+        virtual void free_page(page::pointer_type aAddress) = 0;
     private:
         string iName;
+        root_page iRoot;
         table_list iTables;
     };
 }

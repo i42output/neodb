@@ -129,10 +129,7 @@ namespace neodb
     };
 
     using root_page = basic_page<basic_root_page_header<>>;
-    using free_page = basic_page<>;
-    using table_schema_page = basic_page<>;
-    using table_page = basic_page<>;
-    using index_page = basic_page<>;
+    using page = basic_page<>;
 
     template <typename Char, typename CharT, typename T>
     inline void endian_write(std::basic_ostream<Char, CharT>& aStream, T const& aEndianBuffer)

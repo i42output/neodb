@@ -37,7 +37,6 @@
 #include <filesystem>
 #include <fstream>
 #include <neodb/database.hpp>
-#include <neodb/page.hpp>
 
 namespace neodb
 {
@@ -45,10 +44,9 @@ namespace neodb
     {
     public:
         file_database(std::filesystem::path const& aDatabasePath) :
-            database{ aDatabasePath.filename().stem().generic_string() },
-            iRoot{}
+            database{ aDatabasePath.filename().stem().generic_string() }
         {
-            iRoot.clear();
+            root().clear();
             if (!std::filesystem::exists(aDatabasePath.parent_path()))
                 std::filesystem::create_directories(aDatabasePath.parent_path());
             bool newDatabase = !std::filesystem::exists(aDatabasePath);
@@ -58,11 +56,19 @@ namespace neodb
             file().seekg(0);
             file().seekp(0);
             if (newDatabase)
-                file() << iRoot;
+                file() << root();
             else
-                file() >> iRoot;
+                file() >> root();
             if (!file())
                 throw std::runtime_error{ "Failed to initialise database '" + aDatabasePath.generic_string() + "'" };
+        }
+    protected:
+        page::pointer_type allocate_page() override
+        {
+            return 0;
+        }
+        void free_page(page::pointer_type aAddress) override
+        {
         }
     private:
         std::fstream& file()
@@ -72,6 +78,5 @@ namespace neodb
         void commit();
     private:
         std::optional<std::fstream> iFile;
-        root_page iRoot;
     };
 }
