@@ -48,12 +48,12 @@ namespace neodb
         typedef SpecT base_spec_type;
 
         typed_field_spec(string const& name) :
-            base_spec_type{ name, data_type::Void /* todo */ }
+            base_spec_type{ name, as_dave_type_v<T> }
         {
         }
         template <typename... Args>
         typed_field_spec(string const& name, Args&&... aArgs) :
-            base_spec_type{ name, data_type::Void /* todo */, typename base_spec_type::extra_type{ std::forward<Args>(aArgs)... } }
+            base_spec_type{ name, as_dave_type_v<T>, typename base_spec_type::extra_type{ std::forward<Args>(aArgs)... } }
         {
         }
     };
@@ -79,7 +79,7 @@ namespace neodb
         {
         }
         table_schema(i_table_schema const& aOther) :
-            iName{ aOther.name() }, iFields{ aOther.fields() }
+            iName{ aOther.name() }, iFields{ aOther.fields().begin(), aOther.fields().end() }
         {
         }
     public:

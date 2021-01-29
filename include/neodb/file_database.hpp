@@ -64,10 +64,6 @@ namespace neodb
             if (!file())
                 throw std::runtime_error{ "Failed to initialise database '" + aDatabasePath.generic_string() + "'" };
         }
-    public:
-        void create_table(i_table_schema const& aSchema) override
-        {
-        }
     private:
         std::fstream& file()
         {

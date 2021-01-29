@@ -43,15 +43,13 @@ namespace neodb
     class table : public neolib::reference_counted<i_table>
     {
     public:
-        table(i_database& aDatabase, std::string const& aTableName, i_table_schema const& aSchema) :
+        table(i_database& aDatabase, i_table_schema const& aSchema) :
             iDatabase{ aDatabase },
-            iName{ aTableName },
             iSchema{ aSchema }
         {
         }
         table(i_table const& aOther) : 
             iDatabase{ aOther.database() },
-            iName{ aOther.name() },
             iSchema{ aOther.schema() }
         {
         }
@@ -62,7 +60,7 @@ namespace neodb
         }
         i_string const& name() const override
         {
-            return iName;
+            return iSchema.name();
         }
         i_table_schema const& schema() const override
         {
@@ -70,7 +68,6 @@ namespace neodb
         }
     private:
         i_database& iDatabase;
-        string iName;
         table_schema iSchema;
     };
 }

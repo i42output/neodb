@@ -45,9 +45,5 @@ namespace neodb
             database{ aDatabaseName }
         {
         }
-    public:
-        void create_table(i_table_schema const& aSchema) override
-        {
-        }
     };
 }

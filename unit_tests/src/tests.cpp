@@ -57,7 +57,7 @@ void test_file_database()
             "Invoice Number"_s,
             as_foreign_key<string>{ "Company Name"_s, "Companies"_s, "Company Name"_s },
             "Total"_s);
-    }
+    } 
     {
         file_database database{ "/tmp/accounts.db" };
     }
