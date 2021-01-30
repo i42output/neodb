@@ -171,46 +171,98 @@ namespace neodb
     data_type constexpr as_dave_type_v = as_data_type<T>::result;
 
     template <typename T>
+    struct data_ptr { typedef void* ptr; };
+    template <typename T>
+    struct data_ptr<T const> { typedef void const* ptr; };
+
+    template <typename T>
     struct buffer
     {
         T& value;
-        void const* data() const { return &value; }
+        typename data_ptr<T>::ptr data() const { return &value; }
         std::size_t size() const { return sizeof(T); }
         buffer(T& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<bool const>
+    {
+        uint8_t const value;
+        void const* data() const { return &value; }
+        std::size_t size() const { return sizeof(value); }
+        buffer(bool value) : value{ value } {}
     };
     template <>
     struct buffer<bool>
     {
         uint8_t value;
-        void const* data() const { return &value; }
+        void* data() { return &value; }
         std::size_t size() const { return sizeof(value); }
         buffer(bool value) : value{ value } {}
     };
     template <order Order, typename T, std::size_t Bits, align Align>
-    struct buffer<endian_arithmetic<Order, T, Bits, Align>>
+    struct buffer<endian_arithmetic<Order, T, Bits, Align> const>
     {
-        endian_arithmetic<Order, T, Bits, Align>& value;
+        endian_arithmetic<Order, T, Bits, Align> const value;
         void const* data() const { return value.data(); }
         std::size_t size() const { return Bits / 8; }
-        buffer(endian_arithmetic<Order, T, Bits, Align>& value) : value{ value } {}
+        buffer(endian_arithmetic<Order, T, Bits, Align> const& value) : value{ value } {}
+    };
+    template <order Order, typename T, std::size_t Bits, align Align>
+    struct buffer<endian_arithmetic<Order, T, Bits, Align>>
+    {
+        endian_arithmetic<Order, T, Bits, Align> value;
+        void* data() { return value.data(); }
+        std::size_t size() const { return Bits / 8; }
+        buffer(endian_arithmetic<Order, T, Bits, Align> const& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<string const>
+    {
+        string const& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(string const& value) : value{ value } {}
     };
     template <>
     struct buffer<string>
     {
         string& value;
-        void const* data() const { return value.data(); }
+        void* data() { return value.data(); }
         std::size_t size() const { return value.size(); }
         buffer(string& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<blob const>
+    {
+        blob const& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(blob const& value) : value{ value } {}
     };
     template <>
     struct buffer<blob>
     {
         blob& value;
-        void const* data() const { return value.data(); }
+        void* data() { return value.data(); }
         std::size_t size() const { return value.size(); }
         buffer(blob& value) : value{ value } {}
     };
 
+    template <typename T> struct as_buffer { typedef buffer<T> buffer; };
+    template <> struct as_buffer<int8_t> { typedef buffer<little_int8_t> buffer; };
+    template <> struct as_buffer<int16_t> { typedef buffer<little_int16_t> buffer; };
+    template <> struct as_buffer<int32_t> { typedef buffer<little_int32_t> buffer; };
+    template <> struct as_buffer<int64_t> { typedef buffer<little_int64_t> buffer; };
+    template <> struct as_buffer<uint8_t> { typedef buffer<little_uint8_t> buffer; };
+    template <> struct as_buffer<uint16_t> { typedef buffer<little_uint16_t> buffer; };
+    template <> struct as_buffer<uint32_t> { typedef buffer<little_uint32_t> buffer; };
+    template <> struct as_buffer<uint64_t> { typedef buffer<little_uint64_t> buffer; };
+    template <> struct as_buffer<float> { typedef buffer<little_float32_t> buffer; };
+    template <> struct as_buffer<double> { typedef buffer<little_float64_t> buffer; };
+
+    template <typename T> 
+    using buffer_t = typename as_buffer<T>::buffer;
+    
     template <typename T>
     struct primary_key {};
 
