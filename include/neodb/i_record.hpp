@@ -44,7 +44,18 @@ namespace neodb
     {
         Schema,
         Table,
-        Index
+        Index,
+
+        COUNT
+    };
+
+    template <typename T>
+    void const* to_data(T const& aValue, std::size_t& aDataLength)
+    {
+        thread_local std::optional<buffer<T const>> buffer;
+        buffer.emplace(aValue);
+        aDataLength = buffer->size();
+        return buffer->data();
     };
 
     class i_record : public neolib::i_reference_counted
@@ -55,5 +66,36 @@ namespace neodb
         virtual i_database& database() const = 0;
         virtual record_type type() const = 0;
         virtual link::size_type size() const = 0;
+    public:
+        virtual void write(void const* aData, std::size_t aDataLength) = 0;
+        virtual void read(void* aData, std::size_t aDataLength) = 0;
+    public:
+        template <typename T>
+        void write(T const& aValue)
+        {
+            std::size_t dataLength;
+            auto const data = to_data(aValue, dataLength);
+            write(data, dataLength);
+        }
+        template <typename T>
+        void write(optional<T> const& aValue)
+        {
+            if (aValue)
+            {
+                write(true);
+                write(*aValue);
+            }
+            else
+                write(false);
+        }
     };
+
+    inline i_record& operator<<(i_record& aRecord, data_value_type const& aValue)
+    {
+        std::visit([&](auto&& aValue)
+        {
+            aRecord.write(aValue);
+        }, aValue);
+        return aRecord;
+    }
 }

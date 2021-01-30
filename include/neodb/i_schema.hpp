@@ -37,6 +37,7 @@
 #include <neolib/core/i_vector.hpp>
 #include <neodb/data_type.hpp>
 #include <neodb/page.hpp>
+#include <neodb/i_record.hpp>
 
 namespace neodb
 {
@@ -120,4 +121,16 @@ namespace neodb
         virtual i_string const& name() const = 0;
         virtual i_vector<i_field_spec_variant> const& fields() const = 0;
     };
+
+    inline std::size_t schema_record_size(i_schema const& aSchema)
+    {
+        // todo
+        return 42;
+    }
+
+    inline i_record& operator<<(i_record& aRecord, i_schema const& aSchema)
+    {
+        aRecord << "wibble";
+        return aRecord;
+    }
 }

@@ -38,6 +38,7 @@
 #include <optional>
 #include <variant>
 #include <chrono>
+#include <boost/endian/arithmetic.hpp>
 #include <neolib/core/reference_counted.hpp>
 #include <neolib/core/optional.hpp>
 #include <neolib/core/vector.hpp>
@@ -48,8 +49,19 @@
 using namespace std::string_literals;
 using namespace neolib::string_literals;
 
+namespace neolib
+{
+    namespace detail
+    {
+        template <>
+        struct abstract_type<std::chrono::system_clock::time_point> { typedef std::chrono::system_clock::time_point type; };
+    }
+}
+
 namespace neodb
 {
+    using namespace boost::endian;
+
     using neolib::i_ref_ptr;
     using neolib::ref_ptr;
     using neolib::weak_ref_ptr;
@@ -65,7 +77,7 @@ namespace neodb
     using neolib::uuid;
     using neolib::optional;
     using time = std::chrono::system_clock::time_point;
-    using blob = neolib::vector<uint8_t>;
+    using blob = vector<uint8_t>;
 
     using data_value_type = variant<
         bool,
@@ -157,7 +169,48 @@ namespace neodb
     template <> struct as_data_type<optional<blob>> { static data_type constexpr result = data_type::NullableBlob; };
     template <typename T>
     data_type constexpr as_dave_type_v = as_data_type<T>::result;
-    
+
+    template <typename T>
+    struct buffer
+    {
+        T& value;
+        void const* data() const { return &value; }
+        std::size_t size() const { return sizeof(T); }
+        buffer(T& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<bool>
+    {
+        uint8_t value;
+        void const* data() const { return &value; }
+        std::size_t size() const { return sizeof(value); }
+        buffer(bool value) : value{ value } {}
+    };
+    template <order Order, typename T, std::size_t Bits, align Align>
+    struct buffer<endian_arithmetic<Order, T, Bits, Align>>
+    {
+        endian_arithmetic<Order, T, Bits, Align>& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return Bits / 8; }
+        buffer(endian_arithmetic<Order, T, Bits, Align>& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<string>
+    {
+        string& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(string& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<blob>
+    {
+        blob& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(blob& value) : value{ value } {}
+    };
+
     template <typename T>
     struct primary_key {};
 

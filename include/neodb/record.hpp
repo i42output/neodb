@@ -59,6 +59,13 @@ namespace neodb
         {
             return iSize;
         }
+    public:
+        void write(void const* aData, std::size_t aDataLength) override
+        {
+        }
+        void read(void* aData, std::size_t aDataLength) override
+        {
+        }
     private:
         i_database& iDatabase;
         record_type iType;

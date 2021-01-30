@@ -63,8 +63,27 @@ namespace neodb
         typedef basic_link<pointer_type> link_type;
 
         link_type pageLink;
+    };
+
+    template <typename Pointer = little_uint64_t>
+    struct basic_record_header
+    {
+        typedef Pointer pointer_type;
+        typedef basic_link<pointer_type> link_type;
+
         link_type recordLink;
     };
+    
+    std::size_t constexpr MINIMUM_RECORD_CAPACITY = 64;
+    std::size_t constexpr MAXIMUM_RECORD_CAPACITY = 8192;
+
+    inline constexpr std::size_t free_record_bucket_index(std::size_t aCapacity)
+    {
+        if (aCapacity >= MINIMUM_RECORD_CAPACITY)
+            return 1 + free_record_bucket_index(aCapacity >> 1);
+        else
+            return 0;
+    }
 
     typedef little_uint64_t magic_t;
     magic_t const MAGIC = 0x31307642444F454E; // NEODBv01
@@ -79,12 +98,13 @@ namespace neodb
 
         magic_t magic = MAGIC;
         link_type freePages;
-        link_type tableSchemaPages;
-        link_type tablePages;
-        link_type indexPages;
+        std::array<link_type, free_record_bucket_index(MAXIMUM_RECORD_CAPACITY) - free_record_bucket_index(MINIMUM_RECORD_CAPACITY) + 1> freeRecords;
+        link_type schemaRecords;
+        link_type tableRecords;
+        link_type indexRecords;
     };
 
-    template <typename Header = basic_page_header<>, std::size_t Size = 8192>
+    template <typename Header = basic_page_header<>, std::size_t Size = MAXIMUM_RECORD_CAPACITY * 2>
     struct basic_page
     {
         static constexpr std::size_t size = Size;
@@ -130,6 +150,7 @@ namespace neodb
 
     using link = basic_link<>;
     using page_header = basic_page_header<>;
+    using record_header = basic_record_header<>;
     using page = basic_page<>;
     using root_page = basic_page<basic_root_page_header<>>;
 
@@ -167,9 +188,11 @@ namespace neodb
     {
         endian_write(aStream, aRootHeader.magic);
         aStream << aRootHeader.freePages;
-        aStream << aRootHeader.tableSchemaPages;
-        aStream << aRootHeader.tablePages;
-        aStream << aRootHeader.indexPages;
+        for (auto const& link : aRootHeader.freeRecords)
+            aStream << link;
+        aStream << aRootHeader.schemaRecords;
+        aStream << aRootHeader.tableRecords;
+        aStream << aRootHeader.indexRecords;
         return aStream;
     }
 
@@ -204,9 +227,11 @@ namespace neodb
         if (aRootHeader.magic != MAGIC)
             throw bad_magic();
         aStream >> aRootHeader.freePages;
-        aStream >> aRootHeader.tableSchemaPages;
-        aStream >> aRootHeader.tablePages;
-        aStream >> aRootHeader.indexPages;
+        for (auto& link : aRootHeader.freeRecords)
+            aStream >> link;
+        aStream >> aRootHeader.schemaRecords;
+        aStream >> aRootHeader.tableRecords;
+        aStream >> aRootHeader.indexRecords;
         return aStream;
     }
 

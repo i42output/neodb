@@ -63,6 +63,8 @@ namespace neodb
         }
         void create_table(i_schema const& aSchema) override
         {
+            auto schemaRecord = allocate_record(record_type::Schema, schema_record_size(aSchema));
+            *schemaRecord << aSchema;
             iTables.push_back(make_ref<table>(*this, aSchema));
         }
     public:
@@ -74,6 +76,7 @@ namespace neodb
         {
             return iRoot;
         }
+        using i_database::allocate_record;
         void allocate_record(record_type aRecordType, link::size_type aRecordSize, i_ref_ptr<i_record>& aNewRecord) override
         {
             // todo: use a pool of records to reduce number of memory allocations.
