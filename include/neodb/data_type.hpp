@@ -79,7 +79,115 @@ namespace neodb
     using time = std::chrono::system_clock::time_point;
     using blob = vector<uint8_t>;
 
-        class i_char_string
+    enum data_type : uint32_t
+    {
+        Void                    = 0x00000000,
+        Bool                    = 0x00000001,
+        Int8                    = 0x00000002,
+        Int16                   = 0x00000003,
+        Int32                   = 0x00000004,
+        Int64                   = 0x00000005,
+        Uint8                   = 0x00000006,
+        Uint16                  = 0x00000007,
+        Uint32                  = 0x00000008,
+        Uint64                  = 0x00000009,
+        Float                   = 0x0000000a,
+        Double                  = 0x0000000b,
+        Char                    = 0x0000000c,
+        String                  = 0x0000000d,
+        CharString              = 0x0000000e,
+        VarcharString           = 0x0000000f,
+        Uuid                    = 0x00000010,
+        Time                    = 0x00000011,
+        Blob                    = 0x00000012,
+        NullableBool            = 0x00000013,
+        NullableInt8            = 0x00000014,
+        NullableInt16           = 0x00000015,
+        NullableInt32           = 0x00000016,
+        NullableInt64           = 0x00000017,
+        NullableUint8           = 0x00000018,
+        NullableUint16          = 0x00000019,
+        NullableUint32          = 0x0000001a,
+        NullableUint64          = 0x0000001c,
+        NullableFloat           = 0x0000001d,
+        NullableDouble          = 0x0000001e,
+        NullableChar            = 0x0000001f,
+        NullableString          = 0x00000020,
+        NullableCharString      = 0x00000021,
+        NullableVarcharString   = 0x00000022,
+        NullableUuid            = 0x00000023,
+        NullableTime            = 0x00000024,
+        NullableBlob            = 0x00000025
+    };
+
+    template <data_type Type>
+    class basic_string : public neolib::string
+    {
+        typedef neolib::string base_type;
+    public:
+        using base_type::base_type;
+    };
+
+    using c_string = basic_string<data_type::CharString>;
+    using vc_string = basic_string<data_type::VarcharString>;
+
+    using data_value_type = variant<
+        bool,
+        int8_t, int16_t, int32_t, int64_t,
+        uint8_t, uint16_t, uint32_t, uint64_t,
+        float, double,
+        char, string, c_string, vc_string,
+        uuid,
+        time,
+        blob,
+        optional<bool>,
+        optional<int8_t>, optional<int16_t>, optional<int32_t>, optional<int64_t>,
+        optional<uint8_t>, optional<uint16_t>, optional<uint32_t>, optional<uint64_t>,
+        optional<float>, optional<double>,
+        optional<char>, optional<string>, optional<c_string>, optional<vc_string>,
+        optional<uuid>,
+        optional<time>,
+        optional<blob>>;
+
+    template <typename T> struct as_data_type;
+    template <> struct as_data_type<bool> { static data_type constexpr result = data_type::Bool; };
+    template <> struct as_data_type<int8_t> { static data_type constexpr result = data_type::Int8; };
+    template <> struct as_data_type<int16_t> { static data_type constexpr result = data_type::Int16; };
+    template <> struct as_data_type<int32_t> { static data_type constexpr result = data_type::Int32; };
+    template <> struct as_data_type<int64_t> { static data_type constexpr result = data_type::Int64; };
+    template <> struct as_data_type<uint8_t> { static data_type constexpr result = data_type::Uint8; };
+    template <> struct as_data_type<uint16_t> { static data_type constexpr result = data_type::Uint16; };
+    template <> struct as_data_type<uint32_t> { static data_type constexpr result = data_type::Uint32; };
+    template <> struct as_data_type<uint64_t> { static data_type constexpr result = data_type::Uint64; };
+    template <> struct as_data_type<float> { static data_type constexpr result = data_type::Float; };
+    template <> struct as_data_type<double> { static data_type constexpr result = data_type::Double; };
+    template <> struct as_data_type<char> { static data_type constexpr result = data_type::Char; };
+    template <> struct as_data_type<string> { static data_type constexpr result = data_type::String; };
+    template <> struct as_data_type<c_string> { static data_type constexpr result = data_type::CharString; };
+    template <> struct as_data_type<vc_string> { static data_type constexpr result = data_type::VarcharString; };
+    template <> struct as_data_type<uuid> { static data_type constexpr result = data_type::Uuid; };
+    template <> struct as_data_type<time> { static data_type constexpr result = data_type::Time; };
+    template <> struct as_data_type<blob> { static data_type constexpr result = data_type::Blob; };
+    template <> struct as_data_type<optional<bool>> { static data_type constexpr result = data_type::NullableBool; };
+    template <> struct as_data_type<optional<int8_t>> { static data_type constexpr result = data_type::NullableInt8; };
+    template <> struct as_data_type<optional<int16_t>> { static data_type constexpr result = data_type::NullableInt16; };
+    template <> struct as_data_type<optional<int32_t>> { static data_type constexpr result = data_type::NullableInt32; };
+    template <> struct as_data_type<optional<int64_t>> { static data_type constexpr result = data_type::NullableInt64; };
+    template <> struct as_data_type<optional<uint8_t>> { static data_type constexpr result = data_type::NullableUint8; };
+    template <> struct as_data_type<optional<uint16_t>> { static data_type constexpr result = data_type::NullableUint16; };
+    template <> struct as_data_type<optional<uint32_t>> { static data_type constexpr result = data_type::NullableUint32; };
+    template <> struct as_data_type<optional<uint64_t>> { static data_type constexpr result = data_type::NullableUint64; };
+    template <> struct as_data_type<optional<float>> { static data_type constexpr result = data_type::NullableFloat; };
+    template <> struct as_data_type<optional<double>> { static data_type constexpr result = data_type::NullableDouble; };
+    template <> struct as_data_type<optional<char>> { static data_type constexpr result = data_type::NullableChar; };
+    template <> struct as_data_type<optional<string>> { static data_type constexpr result = data_type::NullableString; };
+    template <> struct as_data_type<optional<c_string>> { static data_type constexpr result = data_type::NullableCharString; };
+    template <> struct as_data_type<optional<vc_string>> { static data_type constexpr result = data_type::NullableVarcharString; };
+    template <> struct as_data_type<optional<uuid>> { static data_type constexpr result = data_type::NullableUuid; };
+    template <> struct as_data_type<optional<time>> { static data_type constexpr result = data_type::NullableTime; };
+    template <> struct as_data_type<optional<blob>> { static data_type constexpr result = data_type::NullableBlob; };
+
+    class i_char_string
     {
     public:
         virtual ~i_char_string() = default;
@@ -115,99 +223,10 @@ namespace neodb
         }
     };
 
-    using data_value_type = variant<
-        bool,
-        int8_t, int16_t, int32_t, int64_t,
-        uint8_t, uint16_t, uint32_t, uint64_t,
-        float, double,
-        char, string,
-        uuid,
-        time,
-        blob,
-        optional<bool>,
-        optional<int8_t>, optional<int16_t>, optional<int32_t>, optional<int64_t>,
-        optional<uint8_t>, optional<uint16_t>, optional<uint32_t>, optional<uint64_t>,
-        optional<float>, optional<double>,
-        optional<char>, optional<string>,
-        optional<uuid>,
-        optional<time>,
-        optional<blob>>;
-
-    enum data_type : uint32_t
-    {
-        Void            = 0x00000000,
-        Bool            = 0x00000001,
-        Int8            = 0x00000002,
-        Int16           = 0x00000003,
-        Int32           = 0x00000004,
-        Int64           = 0x00000005,
-        Uint8           = 0x00000006,
-        Uint16          = 0x00000007,
-        Uint32          = 0x00000008,
-        Uint64          = 0x00000009,
-        Float           = 0x0000000a,
-        Double          = 0x0000000b,
-        Char            = 0x0000000c,
-        String          = 0x0000000d,
-        Uuid            = 0x0000000e,
-        Time            = 0x0000000f,
-        Blob            = 0x00000010,
-        NullableBool    = 0x00000011,
-        NullableInt8    = 0x00000012,
-        NullableInt16   = 0x00000013,
-        NullableInt32   = 0x00000014,
-        NullableInt64   = 0x00000015,
-        NullableUint8   = 0x00000016,
-        NullableUint16  = 0x00000017,
-        NullableUint32  = 0x00000018,
-        NullableUint64  = 0x00000019,
-        NullableFloat   = 0x0000001a,
-        NullableDouble  = 0x0000001b,
-        NullableChar    = 0x0000001c,
-        NullableString  = 0x0000001d,
-        NullableUuid    = 0x0000001e,
-        NullableTime    = 0x0000001f,
-        NullableBlob    = 0x00000020
-    };
-
-    template <typename T> struct as_data_type;
-    template <> struct as_data_type<bool> { static data_type constexpr result = data_type::Bool; };
-    template <> struct as_data_type<int8_t> { static data_type constexpr result = data_type::Int8; };
-    template <> struct as_data_type<int16_t> { static data_type constexpr result = data_type::Int16; };
-    template <> struct as_data_type<int32_t> { static data_type constexpr result = data_type::Int32; };
-    template <> struct as_data_type<int64_t> { static data_type constexpr result = data_type::Int64; };
-    template <> struct as_data_type<uint8_t> { static data_type constexpr result = data_type::Uint8; };
-    template <> struct as_data_type<uint16_t> { static data_type constexpr result = data_type::Uint16; };
-    template <> struct as_data_type<uint32_t> { static data_type constexpr result = data_type::Uint32; };
-    template <> struct as_data_type<uint64_t> { static data_type constexpr result = data_type::Uint64; };
-    template <> struct as_data_type<float> { static data_type constexpr result = data_type::Float; };
-    template <> struct as_data_type<double> { static data_type constexpr result = data_type::Double; };
-    template <> struct as_data_type<char> { static data_type constexpr result = data_type::Char; };
-    template <> struct as_data_type<string> { static data_type constexpr result = data_type::String; };
-    template <> struct as_data_type<uuid> { static data_type constexpr result = data_type::Uuid; };
-    template <> struct as_data_type<time> { static data_type constexpr result = data_type::Time; };
-    template <> struct as_data_type<blob> { static data_type constexpr result = data_type::Blob; };
-    template <> struct as_data_type<optional<bool>> { static data_type constexpr result = data_type::NullableBool; };
-    template <> struct as_data_type<optional<int8_t>> { static data_type constexpr result = data_type::NullableInt8; };
-    template <> struct as_data_type<optional<int16_t>> { static data_type constexpr result = data_type::NullableInt16; };
-    template <> struct as_data_type<optional<int32_t>> { static data_type constexpr result = data_type::NullableInt32; };
-    template <> struct as_data_type<optional<int64_t>> { static data_type constexpr result = data_type::NullableInt64; };
-    template <> struct as_data_type<optional<uint8_t>> { static data_type constexpr result = data_type::NullableUint8; };
-    template <> struct as_data_type<optional<uint16_t>> { static data_type constexpr result = data_type::NullableUint16; };
-    template <> struct as_data_type<optional<uint32_t>> { static data_type constexpr result = data_type::NullableUint32; };
-    template <> struct as_data_type<optional<uint64_t>> { static data_type constexpr result = data_type::NullableUint64; };
-    template <> struct as_data_type<optional<float>> { static data_type constexpr result = data_type::NullableFloat; };
-    template <> struct as_data_type<optional<double>> { static data_type constexpr result = data_type::NullableDouble; };
-    template <> struct as_data_type<optional<char>> { static data_type constexpr result = data_type::NullableChar; };
-    template <> struct as_data_type<optional<string>> { static data_type constexpr result = data_type::NullableString; };
-    template <> struct as_data_type<optional<uuid>> { static data_type constexpr result = data_type::NullableUuid; };
-    template <> struct as_data_type<optional<time>> { static data_type constexpr result = data_type::NullableTime; };
-    template <> struct as_data_type<optional<blob>> { static data_type constexpr result = data_type::NullableBlob; };
-
-    template <std::size_t N> struct as_data_type<char_string<N>> { static data_type constexpr result = data_type::String; };
-    template <std::size_t N> struct as_data_type<varchar_string<N>> { static data_type constexpr result = data_type::String; };
-    template <std::size_t N> struct as_data_type<optional<char_string<N>>> { static data_type constexpr result = data_type::NullableString; };
-    template <std::size_t N> struct as_data_type<optional<varchar_string<N>>> { static data_type constexpr result = data_type::NullableString; };
+    template <std::size_t N> struct as_data_type<char_string<N>> { static data_type constexpr result = data_type::CharString; };
+    template <std::size_t N> struct as_data_type<varchar_string<N>> { static data_type constexpr result = data_type::VarcharString; };
+    template <std::size_t N> struct as_data_type<optional<char_string<N>>> { static data_type constexpr result = data_type::NullableCharString; };
+    template <std::size_t N> struct as_data_type<optional<varchar_string<N>>> { static data_type constexpr result = data_type::NullableVarcharString; };
 
     template <typename T>
     data_type constexpr as_data_type_v = as_data_type<T>::result;
@@ -272,6 +291,38 @@ namespace neodb
         void* data() { return value.data(); }
         std::size_t size() const { return value.size(); }
         buffer(string& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<c_string const>
+    {
+        c_string const& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(c_string const& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<c_string>
+    {
+        c_string& value;
+        void* data() { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(c_string& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<vc_string const>
+    {
+        vc_string const& value;
+        void const* data() const { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(vc_string const& value) : value{ value } {}
+    };
+    template <>
+    struct buffer<vc_string>
+    {
+        vc_string& value;
+        void* data() { return value.data(); }
+        std::size_t size() const { return value.size(); }
+        buffer(vc_string& value) : value{ value } {}
     };
     template <>
     struct buffer<blob const>
