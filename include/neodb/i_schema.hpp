@@ -41,45 +41,102 @@
 
 namespace neodb
 {
-    class i_field_spec
+    enum class field_type
+    {
+        Datum,
+        PrimaryKey,
+        ForeignKey
+    };
+
+    class i_field_spec : public neolib::i_reference_counted
     {
     public:
         typedef i_field_spec abstract_type;
     public:
         virtual ~i_field_spec() = default;
     public:
+        virtual void clone(neolib::i_ref_ptr<i_field_spec>& aSpec) const = 0;
+    public:
         virtual i_string const& name() const = 0;
-        virtual data_type type() const = 0;
+        virtual neodb::field_type field_type() const = 0;
+        virtual neodb::data_type data_type() const = 0;
+        virtual std::size_t layout() const = 0;
+        // helpers
+    public:
+        neolib::ref_ptr<i_field_spec> clone() const
+        {
+            neolib::ref_ptr<i_field_spec> result;
+            clone(result);
+            return result;
+        }
     };
 
     template <typename Interface = i_field_spec>
-    class basic_field_spec : public Interface
+    class basic_field_spec : public neolib::reference_counted<Interface>
     {
     public:
-        basic_field_spec(string const& aName, data_type aType) :
-            iName{ aName }, iType{ aType }
+        basic_field_spec(string const& aName, neodb::field_type aFieldType, neodb::data_type aDataType, std::size_t aLayout) :
+            iName{ aName }, iFieldType{ aFieldType }, iDataType{ aDataType }, iLayout{ aLayout }
         {
         }
     public:
-        string const& name() const override
+        string const& name() const final
         {
             return iName;
         }
-        data_type type() const override
+        neodb::field_type field_type() const final
         {
-            return iType;
+            return iFieldType;
+        }
+        neodb::data_type data_type() const final
+        {
+            return iDataType;
+        }
+        std::size_t layout() const final
+        {
+            return iLayout;
         }
     private:
         string iName;
-        data_type iType;
+        neodb::field_type iFieldType;
+        neodb::data_type iDataType;
+        std::size_t iLayout;
     };
 
     typedef basic_field_spec<> field_spec;
 
+    template <typename T>
+    class datum_spec : public field_spec
+    {
+        typedef field_spec base_type;
+    public:
+        datum_spec(string const& aName) :
+            field_spec{ aName, field_type::Datum, as_data_type_v<T>, layout_v<T> }
+        {
+        }
+    public:
+        using base_type::clone;
+        void clone(neolib::i_ref_ptr<i_field_spec>& aSpec) const final
+        {
+            aSpec = neolib::make_ref<datum_spec<T>>(*this);
+        }
+    };
+
+    template <typename T>
     class primary_key_spec : public field_spec
     {
+        typedef field_spec base_type;
     public:
-        using field_spec::field_spec;
+        primary_key_spec(string const& aName) :
+            field_spec{ aName, field_type::PrimaryKey, as_data_type_v<T>, layout_v<T> }
+        {
+        }
+    public:
+        using base_type::clone;
+        void clone(neolib::i_ref_ptr<i_field_spec>& aSpec) const final
+        {
+            aSpec = neolib::make_ref<primary_key_spec<T>>(*this);
+        }
     };
 
     class i_foreign_key_spec : public i_field_spec
@@ -90,26 +147,29 @@ namespace neodb
         virtual i_foreign_key_reference const& reference() const = 0;
     };
 
+    template <typename T>
     class foreign_key_spec : public basic_field_spec<i_foreign_key_spec>
     {
         typedef basic_field_spec<i_foreign_key_spec> base_type;
     public:
-        typedef foreign_key_reference extra_type;
-    public:
-        foreign_key_spec(string const& aName, data_type aType, foreign_key_reference const& aReference) :
-            base_type{ aName, aType }, iReference{ aReference }
+        template <typename... Args>
+        foreign_key_spec(string const& aName, Args&&... aReferenceArgs) :
+            base_type{ aName, field_type::ForeignKey, as_data_type_v<T>, layout_v<T> }, iReference{ std::forward<Args>(aReferenceArgs)... }
         {}
     public:
-        foreign_key_reference const& reference() const override
+        foreign_key_reference const& reference() const final
         {
             return iReference;
+        }
+    public:
+        using base_type::clone;
+        void clone(neolib::i_ref_ptr<i_field_spec>& aSpec) const final
+        {
+            aSpec = neolib::make_ref<foreign_key_spec<T>>(*this);
         }
     private:
         foreign_key_reference iReference;
     };
-
-    using field_spec_variant = variant<field_spec, primary_key_spec, foreign_key_spec>;
-    using i_field_spec_variant = neolib::abstract_t<field_spec_variant>;
 
     class i_schema
     {
@@ -119,7 +179,7 @@ namespace neodb
         virtual ~i_schema() = default;
     public:
         virtual i_string const& name() const = 0;
-        virtual i_vector<i_field_spec_variant> const& fields() const = 0;
+        virtual i_vector<neolib::i_ref_ptr<i_field_spec>> const& fields() const = 0;
     };
 
     inline std::size_t schema_record_size(i_schema const& aSchema)
@@ -130,7 +190,7 @@ namespace neodb
 
     inline i_record& operator<<(i_record& aRecord, i_schema const& aSchema)
     {
-        aRecord << "wibble";
+        aRecord << "wibble"_s;
         return aRecord;
     }
 }

@@ -79,6 +79,42 @@ namespace neodb
     using time = std::chrono::system_clock::time_point;
     using blob = vector<uint8_t>;
 
+        class i_char_string
+    {
+    public:
+        virtual ~i_char_string() = default;
+    public:
+        virtual std::size_t layout() const = 0;
+    };
+
+    template <std::size_t N>
+    class char_string : public i_char_string
+    {
+    public:
+        std::size_t layout() const final
+        {
+            return N;
+        }
+    };
+
+    class i_varchar_string
+    {
+    public:
+        virtual ~i_varchar_string() = default;
+    public:
+        virtual std::size_t layout() const = 0;
+    };
+
+    template <std::size_t N>
+    class varchar_string : public i_varchar_string
+    {
+    public:
+        std::size_t layout() const final
+        {
+            return N;
+        }
+    };
+
     using data_value_type = variant<
         bool,
         int8_t, int16_t, int32_t, int64_t,
@@ -109,29 +145,29 @@ namespace neodb
         Uint16          = 0x00000007,
         Uint32          = 0x00000008,
         Uint64          = 0x00000009,
-        Float           = 0x00000010,
-        Double          = 0x00000011,
-        Char            = 0x00000012,
-        String          = 0x00000013,
-        Uuid            = 0x00000014,
-        Time            = 0x00000015,
-        Blob            = 0x00000016,
-        NullableBool    = 0x00000017,
-        NullableInt8    = 0x00000018,
-        NullableInt16   = 0x00000019,
-        NullableInt32   = 0x00000020,
-        NullableInt64   = 0x00000021,
-        NullableUint8   = 0x00000022,
-        NullableUint16  = 0x00000023,
-        NullableUint32  = 0x00000024,
-        NullableUint64  = 0x00000025,
-        NullableFloat   = 0x00000026,
-        NullableDouble  = 0x00000027,
-        NullableChar    = 0x00000028,
-        NullableString  = 0x00000029,
-        NullableUuid    = 0x00000030,
-        NullableTime    = 0x00000031,
-        NullableBlob    = 0x00000032
+        Float           = 0x0000000a,
+        Double          = 0x0000000b,
+        Char            = 0x0000000c,
+        String          = 0x0000000d,
+        Uuid            = 0x0000000e,
+        Time            = 0x0000000f,
+        Blob            = 0x00000010,
+        NullableBool    = 0x00000011,
+        NullableInt8    = 0x00000012,
+        NullableInt16   = 0x00000013,
+        NullableInt32   = 0x00000014,
+        NullableInt64   = 0x00000015,
+        NullableUint8   = 0x00000016,
+        NullableUint16  = 0x00000017,
+        NullableUint32  = 0x00000018,
+        NullableUint64  = 0x00000019,
+        NullableFloat   = 0x0000001a,
+        NullableDouble  = 0x0000001b,
+        NullableChar    = 0x0000001c,
+        NullableString  = 0x0000001d,
+        NullableUuid    = 0x0000001e,
+        NullableTime    = 0x0000001f,
+        NullableBlob    = 0x00000020
     };
 
     template <typename T> struct as_data_type;
@@ -167,8 +203,14 @@ namespace neodb
     template <> struct as_data_type<optional<uuid>> { static data_type constexpr result = data_type::NullableUuid; };
     template <> struct as_data_type<optional<time>> { static data_type constexpr result = data_type::NullableTime; };
     template <> struct as_data_type<optional<blob>> { static data_type constexpr result = data_type::NullableBlob; };
+
+    template <std::size_t N> struct as_data_type<char_string<N>> { static data_type constexpr result = data_type::String; };
+    template <std::size_t N> struct as_data_type<varchar_string<N>> { static data_type constexpr result = data_type::String; };
+    template <std::size_t N> struct as_data_type<optional<char_string<N>>> { static data_type constexpr result = data_type::NullableString; };
+    template <std::size_t N> struct as_data_type<optional<varchar_string<N>>> { static data_type constexpr result = data_type::NullableString; };
+
     template <typename T>
-    data_type constexpr as_dave_type_v = as_data_type<T>::result;
+    data_type constexpr as_data_type_v = as_data_type<T>::result;
 
     template <typename T>
     struct data_ptr { typedef void* ptr; };
@@ -262,7 +304,13 @@ namespace neodb
 
     template <typename T> 
     using buffer_t = typename as_buffer<T>::buffer;
-    
+
+    template <typename T> struct layout { static constexpr std::size_t value = 1; };
+    template <std::size_t N> struct layout<char_string<N>> { static constexpr std::size_t value = N; };
+    template <std::size_t N> struct layout<varchar_string<N>> { static constexpr std::size_t value = N; };
+    template <typename T>
+    std::size_t constexpr layout_v = layout<T>::value;
+
     template <typename T>
     struct primary_key {};
 
@@ -284,11 +332,11 @@ namespace neodb
             iTable{ aTable }, iField{ aField }
         {}
     public:
-        i_string const& table() const
+        i_string const& table() const final
         {
             return iTable;
         }
-        i_string const& field() const
+        i_string const& field() const final
         {
             return iField;
         }

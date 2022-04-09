@@ -44,18 +44,18 @@ void test_file_database()
     {
         file_database database{ "/tmp/accounts.db" };
 
-        create_table<primary_key<string>>(
+        create_table<primary_key<char_string<255>>>(
             database,
             "Companies"_s,
             "Company Name"_s);
 
         typedef int32_t currency;
 
-        create_table<primary_key<int32_t>, foreign_key<string>, currency>(
+        create_table<primary_key<int32_t>, foreign_key<char_string<255>>, currency>(
             database,
             "Invoices"_s,
             "Invoice Number"_s,
-            as_foreign_key<string>{ "Company Name"_s, "Companies"_s, "Company Name"_s },
+            as_foreign_key<char_string<255>>{ "Company Name"_s, "Companies"_s, "Company Name"_s },
             "Total"_s);
     } 
     {

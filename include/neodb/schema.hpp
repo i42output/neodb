@@ -42,28 +42,12 @@
 
 namespace neodb
 {
-    template <typename T, typename SpecT>
-    struct typed_field_spec : SpecT
-    {
-        typedef SpecT base_spec_type;
-
-        typed_field_spec(string const& name) :
-            base_spec_type{ name, as_dave_type_v<T> }
-        {
-        }
-        template <typename... Args>
-        typed_field_spec(string const& name, Args&&... aArgs) :
-            base_spec_type{ name, as_dave_type_v<T>, typename base_spec_type::extra_type{ std::forward<Args>(aArgs)... } }
-        {
-        }
-    };
-
     template <typename T>
-    struct to_field_spec { typedef typed_field_spec<T, field_spec> type; };
+    struct to_field_spec { typedef datum_spec<T> type; };
     template <typename T>
-    struct to_field_spec<primary_key<T>> { typedef typed_field_spec<T, primary_key_spec> type; };
+    struct to_field_spec<primary_key<T>> { typedef primary_key_spec<T> type; };
     template <typename T>
-    struct to_field_spec<foreign_key<T>> { typedef typed_field_spec<T, foreign_key_spec> type; };
+    struct to_field_spec<foreign_key<T>> { typedef foreign_key_spec<T> type; };
     template <typename T>
     using to_field_spec_t = typename to_field_spec<T>::type;
 
@@ -75,7 +59,7 @@ namespace neodb
     public:
         template <typename... FieldSpecs>
         schema(string const& aTableName, FieldSpecs&&... aFieldSpecs) :
-            iName{ aTableName }, iFields{ std::forward<FieldSpecs>(aFieldSpecs)... }
+            iName{ aTableName }, iFields{ aFieldSpecs.clone()...}
         {
         }
         schema(i_schema const& aOther) :
@@ -87,13 +71,13 @@ namespace neodb
         {
             return iName;
         }
-        neolib::vector<field_spec_variant> const& fields() const override
+        neolib::vector<neolib::ref_ptr<i_field_spec>> const& fields() const override
         {
             return iFields;
         }
     private:
         string iName;
-        neolib::vector<field_spec_variant> iFields;
+        neolib::vector<neolib::ref_ptr<i_field_spec>> iFields;
     };
 
     template <typename... Fields>
